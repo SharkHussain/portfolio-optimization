@@ -4,6 +4,8 @@
 
 
 import pandas as pd
+import random
+import numpy as np
 
 
 
@@ -33,14 +35,13 @@ def get_data(fileName, plant_id):
     return(dt)
 
 
-import random
-import numpy as np
+
 
 data = get_data('forPythonv2.csv', plant_id=298)
 data.to_csv('data_for_optimization.csv')
 
 
-population_size = 1000
+population_size = 100000
 portfolio_size = 15
 population=[]
 
@@ -50,21 +51,25 @@ for i in np.arange(population_size):
     population.append(dm)
 
 
-fitness_volume = []
-fitness_time = []
+fitness_volume=[]
+fitness_time=[]
+fitness_complexity=[]
 
 for i in np.arange(population_size):
     volume=population[i]['volume'].sum()
     time=population[i]['mean'].sum()
+    complexity=10000/((100*(population[i]['volume']/population[i]['volume'].sum()))**2).sum()
+
 
     fitness_volume.append(volume)
     fitness_time.append(time)
+    fitness_complexity.append(complexity)
 
 
 
 import matplotlib.pyplot as plt
 
-plt.plot(fitness_time, fitness_volume, 'o')
+plt.plot(fitness_complexity, fitness_volume, 'o')
 plt.show()
 
 
