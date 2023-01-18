@@ -42,7 +42,7 @@ data.to_csv('data_for_optimization.csv')
 
 
 population_size = 100000
-portfolio_size = 15
+portfolio_size = 25
 population=[]
 
 for i in np.arange(population_size):
@@ -69,13 +69,16 @@ for i in np.arange(population_size):
 
 import matplotlib.pyplot as plt
 
+plt.figure("Welcome to figure 1")
 plt.plot(fitness_complexity, fitness_volume, 'o')
 plt.show()
 
 
 
-pd.concat([pd.Series(fitness_volume), pd.Series(fitness_time)], axis = 1)
+pd.concat([pd.Series(fitness_volume), pd.Series(fitness_time), pd.Series(fitness_complexity)], axis = 1)
 
 
 #Try HHI index (Herfindahl-Hirschman Index) and Simpson's Index for complexity and join it with model complexity formula.
-
+plt.figure("Welcome to figure 2")
+plt.plot(fitness_complexity, fitness_time, 'o')
+plt.show()
