@@ -16,6 +16,12 @@ class optimizer:
         self.population_size=population_size
         self.portfolio_size=portfolio_size
 
+    def optimize(self):
+        self.population_generation()
+        self.population_fitness_calculation()
+        self.get_pareto_front()
+        return(self.pareto)
+
     def population_generation(self):
         population = self.population
         population_size=self.population_size
@@ -40,7 +46,7 @@ class optimizer:
 
         for i in np.arange(population_size):
             volume = population[i]['volume'].sum()
-            time = population[i]['mean'].sum()
+            time = population[i]['setupMin'].sum()
             complexity = 10000 / ((100 * (population[i]['volume'] / population[i]['volume'].sum())) ** 2).sum()
 
             fitness_volume.append(volume)
@@ -48,9 +54,9 @@ class optimizer:
             fitness_complexity.append(complexity)
 
 
-        dm = round(pd.concat([pd.Series(fitness_volume), pd.Series(fitness_time), pd.Series(fitness_complexity)], axis=1),2)
+        dm = round(pd.concat([pd.Series(fitness_volume), pd.Series(fitness_time), pd.Series(fitness_complexity)], axis=1),4)
         dm.columns = ['volume', 'time', 'complexity']
-        dm['complexity'] = dm['complexity'].round(1)
+        dm['complexity'] = dm['complexity'].round(2)
         self.population_fitness=dm
 
     def get_pareto_front(self):
@@ -74,4 +80,5 @@ class optimizer:
             print(c)
 
         pareto = pd.concat([pd.Series(pareto_complexity), pd.Series(pareto_volume), pd.Series(pareto_time)], axis=1)
+        pareto.columns=['complexity','volume','time']
         self.pareto=pareto

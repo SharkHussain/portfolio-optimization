@@ -1,11 +1,19 @@
 #Complexity is a metric that looks at the total number and interdependencies between the products in a portfolio
 # I need costs, I need running times
+#The time variable at present is a basic sum, it needs to be improved by using the exact change over time
 
 
 
 import pandas as pd
 import random
 import numpy as np
+from matplotlib import pyplot as plt
+
+from importlib import reload
+import optimizer
+reload(optimizer)
+from optimizer import optimizer
+
 
 
 
@@ -34,154 +42,69 @@ def get_data(fileName, plant_id):
         print(item)
     return(dt)
 
-
-
-
-
-
-def run_optimization(data, population_size, portfolio_size):
-
-    population = []
-
-    for i in np.arange(population_size):
-        indices = random.sample(range(0, data.shape[0]), portfolio_size)
-        dm = data.iloc[indices]
-        population.append(dm)
-
-    fitness_volume = []
-    fitness_time = []
-    fitness_complexity = []
-
-    for i in np.arange(population_size):
-        volume = population[i]['volume'].sum()
-        time = population[i]['mean'].sum()
-        complexity = 10000 / ((100 * (population[i]['volume'] / population[i]['volume'].sum())) ** 2).sum()
-
-        fitness_volume.append(volume)
-        fitness_time.append(time)
-        fitness_complexity.append(complexity)
-
-    import matplotlib.pyplot as plt
-
-    plt.figure("Welcome to figure 1")
-    plt.title('Plant Name')
-    plt.plot(fitness_complexity, fitness_volume, 'o')
-    plt.show()
-
-
-    # plt.figure("Welcome to figure 2")
-    # plt.plot(fitness_complexity, fitness_time, 'o')
-    # plt.show()
-
-    dm = round(pd.concat([pd.Series(fitness_volume), pd.Series(fitness_time), pd.Series(fitness_complexity)], axis=1),
-               2)
-    dm.columns = ['volume', 'time', 'complexity']
-    dm['complexity'] = dm['complexity'].round(1)
-
-    complexity_numbers = dm['complexity'].unique()
-    pareto_volume = []
-    pareto_time = []
-    pareto_complexity = []
-
-    for complexity_no in complexity_numbers:
-        da = dm.loc[dm['complexity'] == complexity_no]
-        da = da.sort_values('volume', ascending=False)
-        v = da['volume'].iloc[0]
-        t = da['time'].iloc[0]
-        c = da['complexity'].iloc[0]
-
-        pareto_volume.append(v)
-        pareto_complexity.append(c)
-        pareto_time.append(t)
-
-        print(c)
-
-    pareto=pd.concat([pd.Series(pareto_complexity), pd.Series(pareto_volume), pd.Series(pareto_time)],axis=1)
-    plt.plot(pareto_complexity, pareto_volume, 'o')
-
-    return(pareto)
-
-
-
-
 data = get_data('forPythonv2.csv', plant_id=298)
 data.to_csv('data_for_optimization.csv')
 
 population_size = 10000
-portfolio_size = 20
-
-pareto=run_optimization(data, population_size, portfolio_size)
-
-
-
-
-
-###################################################################
-
-population_size = 10000
 portfolio_size = 25
-population=[]
 
-for i in np.arange(population_size):
-    indices=random.sample(range(0, data.shape[0]), portfolio_size)
-    dm=data.iloc[indices]
-    population.append(dm)
+opt=optimizer(data, population_size, portfolio_size)
+pareto=opt.optimize()
 
+#pareto=pareto[pareto['complexity']<8]
 
-fitness_volume=[]
-fitness_time=[]
-fitness_complexity=[]
-
-for i in np.arange(population_size):
-    volume=population[i]['volume'].sum()
-    time=population[i]['mean'].sum()
-    complexity=10000/((100*(population[i]['volume']/population[i]['volume'].sum()))**2).sum()
-
-
-    fitness_volume.append(volume)
-    fitness_time.append(time)
-    fitness_complexity.append(complexity)
-
-
-
-import matplotlib.pyplot as plt
-
-plt.figure("Welcome to figure 1")
-plt.plot(fitness_complexity, fitness_volume, 'o')
+pareto=pareto.sort_values('complexity')
+plt.figure("Portfolio - Pareto Front")
+plt.title('Plant ID = 298, Portfolio Size = 25')
+plt.plot(opt.population_fitness['complexity'],opt.population_fitness['volume'], 'o' )
+plt.plot(pareto['complexity'],pareto['volume'], 'o' )
+plt.xlabel('Complexity')
+plt.ylabel('Volume')
 plt.show()
 
 
-#Try HHI index (Herfindahl-Hirschman Index) and Simpson's Index for complexity and join it with model complexity formula.
-#plt.figure("Welcome to figure 2")
-#plt.plot(fitness_complexity, fitness_time, 'o')
-#plt.show()
+pareto=pareto.sort_values('complexity')
+plt.figure("Welcome to figure 2")
+plt.title('Plant ID = 298')
+plt.plot(pareto['complexity'],pareto['time'])
+plt.show()
+
+
+a=opt.population_fitness
+a=a.sort_values('complexity')
+
+plt.figure("Welcome to figure 3")
+plt.title('Plant ID = 298')
+plt.plot(a['time'],a['volume'] , 'o')
+plt.show()
+
+plt.figure("Welcome to figure 4")
+plt.plot(a['complexity'], a['time'])
+plt.show()
 
 
 
-dm = round(pd.concat([pd.Series(fitness_volume), pd.Series(fitness_time), pd.Series(fitness_complexity)], axis = 1),2)
-dm.columns = ['volume', 'time', 'complexity']
-dm['complexity']=dm['complexity'].round(1)
+
+from sklearn.linear_model import LinearRegression
+
+X=np.array(a['complexity'])
+Y=np.array(a['time'])
+
+X=X.reshape(-1,1)
+Y=Y.reshape(-1,1)
+
+model=LinearRegression()
+model.fit(X,Y)
+print(model.coef_)
+
+y_=model.predict(X)
 
 
-complexity_numbers = dm['complexity'].unique()
-pareto_volume=[]
-pareto_time=[]
-pareto_complexity=[]
+plt.figure("Complexity vs. Time")
+plt.title('Complexity vs. Time, 30min on average')
+plt.plot(X,Y,'o')
+plt.plot(X,y_)
+plt.xlabel('Complexity')
+plt.ylabel('Volume')
+plt.show()
 
-for complexity_no in complexity_numbers:
-
-    da=dm.loc[dm['complexity']==complexity_no]
-    da=da.sort_values('volume', ascending=False)
-    v=da['volume'].iloc[0]
-    t=da['time'].iloc[0]
-    c=da['complexity'].iloc[0]
-
-    pareto_volume.append(v)
-    pareto_complexity.append(c)
-    pareto_time.append(t)
-
-    print(c)
-
-
-
-plt.plot(pareto_complexity, pareto_volume, 'o')
